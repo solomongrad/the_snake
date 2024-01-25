@@ -62,6 +62,13 @@ class GameObject:
         pass
 
     def rect_maker(self, position, body_color, surface=screen):
+        """Отрисовывает объекты класса
+
+        Параметры:
+            position - позиция.
+            body_color - цвет.
+            surface - объект класса pygame.surface.Surface.
+        """
         rect = pg.Rect(
             (position[0], position[1]),
             (GRID_SIZE, GRID_SIZE)
@@ -203,6 +210,7 @@ def handle_keys(game_object):
 
 
 def draw_lines():
+    """Отрисовывает клетки на игровом поле"""
     for i in range(1, GRID_HEIGHT):
         pg.draw.line(
             screen,
