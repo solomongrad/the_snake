@@ -57,23 +57,22 @@ class GameObject:
         self.body_color = body_color
         self.position = position
 
-    def draw(self, surface=screen):
+    def draw(self, surface):
         """Заготовка метода для отрисовки объекта на игровом поле"""
         pass
 
-    def rect_maker(self, position, body_color, surface=screen):
+    def rect_maker(self, surface, position):
         """Отрисовывает объекты класса
 
         Параметры:
             position - позиция.
-            body_color - цвет.
             surface - объект класса pygame.surface.Surface.
         """
         rect = pg.Rect(
-            (position[0], position[1]),
+            (position),
             (GRID_SIZE, GRID_SIZE)
         )
-        pg.draw.rect(surface, body_color, rect)
+        pg.draw.rect(surface, self.body_color, rect)
         pg.draw.rect(surface, BORDER_COLOR, rect, 1)
 
 
@@ -83,7 +82,7 @@ class Apple(GameObject):
     Методы: randomize_position(); draw()
     """
 
-    def __init__(self, position=CENTRE, body_color=APPLE_COLOR):
+    def __init__(self, snake=None, position=CENTRE, body_color=APPLE_COLOR):
         """Устанавливает все параметры класса Apple
            и устанавливает яблоку случайную позицию на игровом поле
 
@@ -91,18 +90,21 @@ class Apple(GameObject):
             position - позиция.
             body_color - цвет.
         """
-        super().__init__(position, body_color)
-        self.randomize_position([CENTRE])
+        super().__init__(body_color)
+        self.body_color = body_color
+        self.position = position
+        self.randomize_position(snake)
 
-    def randomize_position(self, occupied):
+    def randomize_position(self, snake):
         """Устанавливает случайное положение яблока на игровом поле."""
-        while self.position in occupied:
-            self.position = [(randint(0, GRID_WIDTH - 1) * GRID_SIZE),
-                             (randint(0, GRID_HEIGHT - 1) * GRID_SIZE)]
+        if snake.positions:
+            while self.position in snake.positions:
+                self.position = [(randint(0, GRID_WIDTH - 1) * GRID_SIZE),
+                                 (randint(0, GRID_HEIGHT - 1) * GRID_SIZE)]
 
-    def draw(self, surface=screen):
+    def draw(self, surface):
         """Отрисовывает яблоко на игровой поверхности."""
-        self.rect_maker(self.position, self.body_color)
+        self.rect_maker(screen, self.position)
 
 
 class Snake(GameObject):
@@ -116,7 +118,7 @@ class Snake(GameObject):
         reset() - Сбрасывает все параметры до исходных
     """
 
-    def __init__(self, position=CENTRE, body_color=SNAKE_COLOR):
+    def __init__(self, body_color=SNAKE_COLOR):
         """Устанавливает необходимые параметры.
 
         Параметры:
@@ -128,9 +130,8 @@ class Snake(GameObject):
             next_direction - следующее направление
             last - координаты последнего элемента змейки
         """
-        super().__init__(position, body_color)
-        self.length = 1
-        self.positions = [self.position]
+        super().__init__(position=CENTRE, body_color=SNAKE_COLOR)
+        self.reset()
         self.direction = RIGHT
         self.next_direction = None
         self.last = None
@@ -158,23 +159,20 @@ class Snake(GameObject):
             self.reset()
         if len(self.positions) > self.length:
             self.last = self.positions.pop()
+        else:
+            self.last = None
 
-    def draw(self, surface=screen):
+    def draw(self, surface):
         """Отрисовывает змейку на экране, затирая след"""
-        # for position in self.positions[:-1]:
-        #     rect = (
-        #         pg.Rect((position[0], position[1]), (GRID_SIZE, GRID_SIZE))
-        #     )
-        #     pg.draw.rect(surface, self.body_color, rect)
-        #     pg.draw.rect(surface, BORDER_COLOR, rect, 1)
-
         # Отрисовка змейки
-        for position in self.positions:
-            self.rect_maker(position, self.body_color)
+        self.rect_maker(screen, self.positions[0])
 
         # Затирание последнего сегмента
         if self.last:
-            self.rect_maker(self.last, BOARD_BACKGROUND_COLOR)
+            pg.draw.rect(
+                surface, BOARD_BACKGROUND_COLOR, pg.Rect(
+                    self.last, (GRID_SIZE, GRID_SIZE))
+            )
 
     def get_head_position(self):
         """Созвращает позицию головы змейки."""
@@ -185,7 +183,7 @@ class Snake(GameObject):
         столкновения с собой.
         """
         self.length = 1
-        self.positions = [SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2]
+        self.positions = [self.position]
         self.direction = choice([RIGHT, LEFT, UP, DOWN])
 
 
@@ -209,47 +207,27 @@ def handle_keys(game_object):
                 exit('Программа завершена')
 
 
-def draw_lines():
-    """Отрисовывает клетки на игровом поле"""
-    for i in range(1, GRID_HEIGHT):
-        pg.draw.line(
-            screen,
-            BORDER_COLOR,
-            (0, i * GRID_SIZE),
-            (SCREEN_WIDTH, i * GRID_SIZE),
-            3
-        )
-
-    for i in range(1, GRID_WIDTH):
-        pg.draw.line(
-            screen,
-            BORDER_COLOR,
-            (i * GRID_SIZE, 0),
-            (i * GRID_SIZE, SCREEN_HEIGHT),
-            3
-        )
-
-
 def main():
     """Функция, содержащая основной цикл игры."""
     # Инициализация PyGame:
     pg.init()
     snake = Snake()
-    apple = Apple()
+    apple = Apple(snake)
     apple.draw(screen)
     while True:
         handle_keys(snake)
         clock.tick(SPEED)
         snake.update_direction()
         snake.move()
-        if apple.position in snake.positions:
-            snake.length += 1
-            apple.randomize_position(snake.positions)
-        if snake.get_head_position() == snake.positions[2:]:
+        if snake.get_head_position() == apple.position:
+            snake.length += 10
+            apple.randomize_position(snake)
             apple.draw(screen)
+        if snake.get_head_position() in snake.positions[2:]:
+            apple.draw(screen)
+            screen.fill(BOARD_BACKGROUND_COLOR)
             snake.reset()
-        draw_lines()
-        apple.draw(screen)
+            apple.draw(screen)
         snake.draw(screen)
         pg.display.update()
 
