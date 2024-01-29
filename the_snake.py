@@ -220,7 +220,7 @@ def main():
         snake.update_direction()
         snake.move()
         if snake.get_head_position() == apple.position:
-            snake.length += 10
+            snake.length += 1
             apple.randomize_position(snake)
             apple.draw(screen)
         if snake.get_head_position() in snake.positions[2:]:
