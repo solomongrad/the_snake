@@ -97,10 +97,9 @@ class Apple(GameObject):
 
     def randomize_position(self, snake):
         """Устанавливает случайное положение яблока на игровом поле."""
-        if snake.positions:
-            while self.position in snake.positions:
-                self.position = [(randint(0, GRID_WIDTH - 1) * GRID_SIZE),
-                                 (randint(0, GRID_HEIGHT - 1) * GRID_SIZE)]
+        while snake and self.position in snake.positions:
+            self.position = [(randint(0, GRID_WIDTH - 1) * GRID_SIZE),
+                             (randint(0, GRID_HEIGHT - 1) * GRID_SIZE)]
 
     def draw(self, surface):
         """Отрисовывает яблоко на игровой поверхности."""
