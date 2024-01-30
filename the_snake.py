@@ -151,8 +151,8 @@ class Snake(GameObject):
              (head[1] + self.direction[1] * GRID_SIZE) % SCREEN_HEIGHT]
         )
         self.positions.insert(0, new_cords)
-        self.last = (
-           self.positions.pop() if len(self.positions) > self.length else None)
+        self.last = self.positions.pop() if (
+            len(self.positions) > self.length) else None
 
     def draw(self, surface):
         """Отрисовывает змейку на экране, затирая след"""
