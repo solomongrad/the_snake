@@ -82,7 +82,7 @@ class Apple(GameObject):
     Методы: randomize_position(); draw()
     """
 
-    def __init__(self, snake=None, position=CENTRE, body_color=APPLE_COLOR):
+    def __init__(self, snake=None):
         """Устанавливает все параметры класса Apple
            и устанавливает яблоку случайную позицию на игровом поле
 
@@ -90,9 +90,7 @@ class Apple(GameObject):
             position - позиция.
             body_color - цвет.
         """
-        super().__init__(body_color)
-        self.body_color = body_color
-        self.position = position
+        super().__init__(position=CENTRE, body_color=APPLE_COLOR)
         self.randomize_position(snake)
 
     def randomize_position(self, snake):
@@ -153,18 +151,13 @@ class Snake(GameObject):
              (head[1] + self.direction[1] * GRID_SIZE) % SCREEN_HEIGHT]
         )
         self.positions.insert(0, new_cords)
-        # Обработка ситуации "змейка врезается в себя"
-        if head in self.positions[2:]:
-            self.reset()
-        if len(self.positions) > self.length:
-            self.last = self.positions.pop()
-        else:
-            self.last = None
+        self.last = (
+           self.positions.pop() if len(self.positions) > self.length else None)
 
     def draw(self, surface):
         """Отрисовывает змейку на экране, затирая след"""
         # Отрисовка змейки
-        self.rect_maker(screen, self.positions[0])
+        self.rect_maker(screen, self.get_head_position())
 
         # Затирание последнего сегмента
         if self.last:
@@ -223,7 +216,6 @@ def main():
             apple.randomize_position(snake)
             apple.draw(screen)
         if snake.get_head_position() in snake.positions[2:]:
-            apple.draw(screen)
             screen.fill(BOARD_BACKGROUND_COLOR)
             snake.reset()
             apple.draw(screen)
